@@ -76,20 +76,13 @@ class sub_redis_node(Node):
             self.send_data_to_redis('rgb_image', cv2.cvtColor(closest_rgb_image, cv2.COLOR_BGR2RGB) )
             self.blend_and_show(closest_rgb_image, depth_image)
 
-            print(f'depth:{msg.header.stamp.sec + 1e-9 * msg.header.stamp.nanosec}') #TODO:debug
-            print(f'rgb:{self.rgb_time_list[closest_rgb_idx]}') #TODO:debug
-
         # Find closest timestamp for pose
         if len(self.pose_time_list) > 0:
             closest_pose_idx = np.argmin( np.abs(np.array(self.pose_time_list) - depth_time) )
             closest_pose = self.pose_list[closest_pose_idx]
             self.send_data_to_redis('vicon_data', closest_pose)
 
-            print(f'depth:{msg.header.stamp.sec + 1e-9 * msg.header.stamp.nanosec}') #TODO:debug
-            print(f'pose:{self.pose_time_list[closest_pose_idx]}') #TODO:debug
-
     
-
 
     def send_data_to_redis(self, key, data):
         # Serialize the message using pickle
