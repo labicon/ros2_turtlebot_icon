@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'hongrui_img_sub'
+package_name = 'turtlebot_icon'
 
 setup(
     name=package_name,
