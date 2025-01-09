@@ -3,6 +3,7 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 import cv2
 from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
 import numpy as np
 import sys
 import redis
@@ -10,63 +11,39 @@ import pickle  # For serializing the image data
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 import datetime
 import time
-
 class consensus_node(Node):
     def __init__(self, bot_name, other_bot_name):
         super().__init__('consensus_node')
         # define some variable
-        self.consensus_sub_waitTime = 1.
+        self.consensus_publish_waitTime = 60. # don't send it fastetr than it can be processed
+        self.agent_i_old = None
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
 
-        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data)
-
-        # baby's first cry
-        agent_i =  self.redis_client.get('agent_i')
-        
-        while agent_i == None:
-            agent_i =  self.redis_client.get('agent_i')
-            time.sleep(1)
-
-        agent_i_pickled = pickle.loads(agent_i)
-        theta_i = agent_i_pickled['theta_i']
-        uncertainty_i = agent_i_pickled['uncertainty_i']
-        # Combine the arrays into a 2D array
-        combined_data = np.vstack((theta_i, uncertainty_i))  # Stack vertically
-        # Create Float32MultiArray message
-        msg = Float32MultiArray()
-        msg.data = combined_data.flatten().tolist()  # Flatten and convert to list
-        # Set the dimensions (assuming theta_i and uncertainty_i have the same length)
-        msg.layout.dim = [
-            MultiArrayDimension(label="row", size=2, stride=len(theta_i)),
-            MultiArrayDimension(label="column", size=len(theta_i), stride=1)
-        ]
-        # Publish the message
-        self.publisher.publish(msg)
-        print(f"{datetime.datetime.now()}:    baby;s first cry")
-        
-        # create sub
+        # for consensus
+        qos_profile = QoSProfile( reliability=QoSReliabilityPolicy.RELIABLE, history=QoSHistoryPolicy.KEEP_LAST, depth=2, durality=QoSDurabilityPolicy.VOLATILE )
         self.subscription4 = self.create_subscription(
-            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile_sensor_data)          
-
+            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile)          
+        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile)
+        self.timer = self.create_timer(self.consensus_publish_waitTime, self.publish_data)  # calls the publish_data functionck every x seconds
 
     
     def consensus_callback(self, msg: Float32MultiArray):
-        # subscribe
         data = np.array(msg.data).reshape((msg.layout.dim[0].size, msg.layout.dim[1].size))
         theta_j = data[0, :]
         uncertainty_j = data[1, :]
         agent_j = {'theta_j':theta_j, 'uncertainty_j':uncertainty_j}
         agent_j_pickled = pickle.dumps(agent_j)
         self.redis_client.set('agent_j', agent_j_pickled)
+        print(f"{datetime.datetime.now()}:    consensus receive")
 
-        time.sleep(self.consensus_sub_waitTime )
-        print(f"{datetime.datetime.now()}:    consensus sent to local host")
 
+
+    def publish_data(self):
         # publish
         agent_i =  self.redis_client.get('agent_i')
-        if agent_i:
+        if agent_i != self.agent_i_old:
             agent_i_pickled = pickle.loads(agent_i)
             theta_i = agent_i_pickled['theta_i']
             uncertainty_i = agent_i_pickled['uncertainty_i']
@@ -95,6 +72,8 @@ class consensus_node(Node):
             # Publish the message
             self.publisher.publish(msg)
             print(f"{datetime.datetime.now()}:    consensus send")
+            self.agent_i_old = agent_i
+    
     
 
 
