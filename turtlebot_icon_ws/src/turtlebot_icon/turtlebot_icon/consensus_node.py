@@ -15,19 +15,45 @@ class consensus_node(Node):
     def __init__(self, bot_name, other_bot_name):
         super().__init__('consensus_node')
         # define some variable
-        self.consensus_sub_waitTime = 50.
+        self.consensus_sub_waitTime = 1.
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
 
-        # for consensus
+        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data)
+
+        # baby's first cry
+        agent_i =  self.redis_client.get('agent_i')
+        
+        while agent_i == None:
+            agent_i =  self.redis_client.get('agent_i')
+            time.sleep(1)
+
+        agent_i_pickled = pickle.loads(agent_i)
+        theta_i = agent_i_pickled['theta_i']
+        uncertainty_i = agent_i_pickled['uncertainty_i']
+        # Combine the arrays into a 2D array
+        combined_data = np.vstack((theta_i, uncertainty_i))  # Stack vertically
+        # Create Float32MultiArray message
+        msg = Float32MultiArray()
+        msg.data = combined_data.flatten().tolist()  # Flatten and convert to list
+        # Set the dimensions (assuming theta_i and uncertainty_i have the same length)
+        msg.layout.dim = [
+            MultiArrayDimension(label="row", size=2, stride=len(theta_i)),
+            MultiArrayDimension(label="column", size=len(theta_i), stride=1)
+        ]
+        # Publish the message
+        self.publisher.publish(msg)
+        print(f"{datetime.datetime.now()}:    baby;s first cry")
+        
+        # create sub
         self.subscription4 = self.create_subscription(
             Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile_sensor_data)          
-        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data)
+
 
     
     def consensus_callback(self, msg: Float32MultiArray):
-        print(f"{datetime.datetime.now()}:    consensus receive")
+        # subscribe
         data = np.array(msg.data).reshape((msg.layout.dim[0].size, msg.layout.dim[1].size))
         theta_j = data[0, :]
         uncertainty_j = data[1, :]
@@ -36,11 +62,11 @@ class consensus_node(Node):
         self.redis_client.set('agent_j', agent_j_pickled)
 
         time.sleep(self.consensus_sub_waitTime )
+        print(f"{datetime.datetime.now()}:    consensus sent to local host")
 
         # publish
         agent_i =  self.redis_client.get('agent_i')
         if agent_i:
-            print(f"{datetime.datetime.now()}:    consensus send")
             agent_i_pickled = pickle.loads(agent_i)
             theta_i = agent_i_pickled['theta_i']
             uncertainty_i = agent_i_pickled['uncertainty_i']
@@ -68,7 +94,7 @@ class consensus_node(Node):
             ]
             # Publish the message
             self.publisher.publish(msg)
-    
+            print(f"{datetime.datetime.now()}:    consensus send")
     
 
 
@@ -79,14 +105,6 @@ class consensus_node(Node):
         self.redis_client.set(key, pickled_data)
 
 
-    def blend_and_show(self):
-        if self.rgb_image is not None and self.depth_image is not None:
-            depth_image_8bit = (self.depth_image * 255. / self.maxDepth).astype(np.uint8)
-            depth_3ch = cv2.cvtColor(depth_image_8bit, cv2.COLOR_GRAY2BGR)
-            depth_3ch = cv2.applyColorMap(depth_3ch, cv2.COLORMAP_JET)
-            blended_image = cv2.addWeighted(self.rgb_image, 0.7, depth_3ch, 0.3, 0)
-            cv2.imshow('Blended Image', blended_image)
-            #cv2.waitKey(1)
 
 
 def main(args=None):
