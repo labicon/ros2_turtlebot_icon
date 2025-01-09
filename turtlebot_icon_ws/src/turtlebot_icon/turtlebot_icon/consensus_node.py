@@ -2,8 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 import cv2
-from rclpy.qos import qos_profile_sensor_data
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
+from rclpy.qos import qos_profile_sensor_data, QoSProfile,  ReliabilityPolicy, HistoryPolicy, DurabilityPolicy 
 import numpy as np
 import sys
 import redis
@@ -22,7 +21,10 @@ class consensus_node(Node):
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
 
         # for consensus
-        qos_profile = QoSProfile( reliability=QoSReliabilityPolicy.RELIABLE, history=QoSHistoryPolicy.KEEP_LAST, depth=2, durality=QoSDurabilityPolicy.VOLATILE )
+        qos_profile = QoSProfile(
+                history=HistoryPolicy.KEEP_LAST, 
+                reliability=ReliabilityPolicy.RELIABLE, 
+                depth=1  ) 
         self.subscription4 = self.create_subscription(
             Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile)          
         self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile)
