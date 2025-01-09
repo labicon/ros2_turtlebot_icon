@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
 import cv2
 from rclpy.qos import qos_profile_sensor_data
 import numpy as np
@@ -16,20 +15,15 @@ class consensus_node(Node):
     def __init__(self, bot_name, other_bot_name):
         super().__init__('consensus_node')
         # define some variable
-        self.consensus_publish_waitTime = 20. # don't send it fastetr than it can be processed
-        self.consensus_sub_waitTime = 5. 
-        
-        # callback group
-        consensus_group = ReentrantCallbackGroup()
+        self.consensus_sub_waitTime = 50.
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
 
         # for consensus
         self.subscription4 = self.create_subscription(
-            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile_sensor_data, callback_group=consensus_group)          
-        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data, callback_group=consensus_group)
-        self.timer = self.create_timer(self.consensus_publish_waitTime, self.publish_data)  # calls the publish_data functionck every x seconds
+            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile_sensor_data)          
+        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data)
 
     
     def consensus_callback(self, msg: Float32MultiArray):
@@ -43,9 +37,6 @@ class consensus_node(Node):
 
         time.sleep(self.consensus_sub_waitTime )
 
-
-
-    def publish_data(self):
         # publish
         agent_i =  self.redis_client.get('agent_i')
         if agent_i:
@@ -107,10 +98,9 @@ def main(args=None):
         ohter_bot_name = sys.argv[2]
 
     my_node = consensus_node(bot_name, ohter_bot_name)
-    executor = MultiThreadedExecutor()
-    executor.add_node(my_node)
+
     try:
-        executor.spin()
+        rclpy.spin(my_node)
     except KeyboardInterrupt:
         my_node.destroy_node()
         rclpy.shutdown()
