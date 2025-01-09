@@ -14,7 +14,8 @@ class consensus_node(Node):
     def __init__(self, bot_name, other_bot_name):
         super().__init__('consensus_node')
         # define some variable
-        self.consensus_publish_waitTime = 60. # don't send it fastetr than it can be processed
+        self.consensus_publish_waitTime = 60. #
+        self.consensus_subwaitTime = 30.
         self.agent_i_old = None
 
         # Redis connection
@@ -38,6 +39,7 @@ class consensus_node(Node):
         agent_j = {'theta_j':theta_j, 'uncertainty_j':uncertainty_j}
         agent_j_pickled = pickle.dumps(agent_j)
         self.redis_client.set('agent_j', agent_j_pickled)
+        time.sleep(self.consensus_subwaitTime)
         print(f"{datetime.datetime.now()}:    consensus receive")
 
 
