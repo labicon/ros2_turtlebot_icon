@@ -13,7 +13,7 @@ class consensus_pub(Node):
     def __init__(self, bot_name):
         super().__init__('consensus_pub')
         # define some variable
-        self.consensus_publish_waitTime = 5
+        self.consensus_publish_waitTime = 10
         self.agent_i_old = None
 
         # Redis connection
