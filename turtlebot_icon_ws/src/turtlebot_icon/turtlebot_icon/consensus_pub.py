@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
 import numpy as np
 import sys
 import redis
@@ -13,13 +13,13 @@ class consensus_pub(Node):
     def __init__(self, bot_name):
         super().__init__('consensus_pub')
         # define some variable
-        self.consensus_publish_waitTime = 0.5
+        self.consensus_publish_waitTime = 5
         self.agent_i_old = None
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
         
-        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data)
+        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_services_default)
         self.timer = self.create_timer(self.consensus_publish_waitTime, self.publish_data)  # calls the publish_data functionck every x seconds
 
 

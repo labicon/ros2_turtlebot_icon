@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
 import sys
 import redis
 from std_msgs.msg import Float32MultiArray
@@ -14,13 +14,13 @@ class consensus_sub(Node):
     def __init__(self, other_bot_name):
         super().__init__('consensus_sub')
         # define some variable
-        self.consensus_subwaitTime = 2.5
+        self.consensus_subwaitTime = 0.5
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
 
         self.subscription4 = self.create_subscription(
-            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile_sensor_data )
+            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile_services_default )
     
     def consensus_callback(self, msg: Float32MultiArray):
         data = np.array(msg.data).reshape((msg.layout.dim[0].size, msg.layout.dim[1].size))
