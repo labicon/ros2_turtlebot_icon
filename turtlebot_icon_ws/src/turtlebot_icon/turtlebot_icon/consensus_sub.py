@@ -14,7 +14,7 @@ class consensus_sub(Node):
     def __init__(self, other_bot_name):
         super().__init__('consensus_sub')
         # define some variable
-        self.consensus_subwaitTime = 0.5
+        self.consensus_subwaitTime = 2.5
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
