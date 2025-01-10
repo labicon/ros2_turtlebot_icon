@@ -9,10 +9,10 @@ import sys
 import redis
 import pickle  # For serializing the image data
 from geometry_msgs.msg import PoseStamped
-
+import os
 
 class sub_redis_node(Node):
-    def __init__(self, bot_name):
+    def __init__(self, bot_name, save_path):
         super().__init__('sub_redis_node')
         # define some variable
         self.bridge = CvBridge()
@@ -34,6 +34,9 @@ class sub_redis_node(Node):
             Image, f'/{bot_name}/oakd/stereo/image_raw', self.depth_image_callback, qos_profile_sensor_data)
         self.subscription3 = self.create_subscription(
             PoseStamped, f'/vicon/{bot_name}/{bot_name}/pose', self.vicon_data_callback, qos_profile_sensor_data)
+        
+        self.save_path = save_path
+        self.counter = 0
 
         
 
@@ -69,19 +72,34 @@ class sub_redis_node(Node):
         self.send_data_to_redis('depth_image', depth_image)
         
         depth_time = msg.header.stamp.sec + 1e-9 * msg.header.stamp.nanosec
+
+        
+        # Save depth_image
+        self.counter += 1 
+        cv2.imwrite(self.save_path+f'/depth_{self.counter}.png', depth_image)
+
         # Find closest timestamp for RGB image
         if len(self.rgb_time_list) > 0:
             closest_rgb_idx = np.argmin( np.abs(np.array(self.rgb_time_list) - depth_time) )
             closest_rgb_image = self.rgb_list[closest_rgb_idx]
+            # Save closest_rgb_image
+            cv2.imwrite(self.save_path+f'/rgb_{self.counter}.png', closest_rgb_image )
+            # send
             self.send_data_to_redis('rgb_image', cv2.cvtColor(closest_rgb_image, cv2.COLOR_BGR2RGB) )
             self.blend_and_show(closest_rgb_image, depth_image)
+
+
 
         # Find closest timestamp for pose
         if len(self.pose_time_list) > 0:
             closest_pose_idx = np.argmin( np.abs(np.array(self.pose_time_list) - depth_time) )
             closest_pose = self.pose_list[closest_pose_idx]
             self.send_data_to_redis('vicon_data', closest_pose)
-
+            
+            # Save closest_pose (assuming you have a way to serialize it)
+            pose_filename =  self.save_path+f'/pose_{self.counter}.pkl' 
+            with open(pose_filename, 'wb') as f:
+                pickle.dump(closest_pose, f)
     
 
     def send_data_to_redis(self, key, data):
@@ -100,14 +118,18 @@ class sub_redis_node(Node):
             cv2.imshow('Blended Image', blended_image)
             cv2.waitKey(1)
 
+
 def main(args=None):
     rclpy.init(args=args)
 
     bot_name = 'miriel'  # Default bot name
     if len(sys.argv) > 1:
         bot_name = sys.argv[1]
+        save_path = sys.argv[2]
 
-    image_blender = sub_redis_node(bot_name)
+    save_path = os.path.join('./saved_data', save_path)
+    os.makedirs(save_path, exist_ok=True)
+    image_blender = sub_redis_node(bot_name, save_path)
     rclpy.spin(image_blender)
     image_blender.destroy_node()
     rclpy.shutdown()
