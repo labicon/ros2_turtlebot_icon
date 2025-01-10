@@ -67,6 +67,7 @@ def main(args=None):
     
     my_node = consensus_pub(bot_name)
 
+    print("consensus publisher is now running...")
     rclpy.spin(my_node)
     my_node.destroy_node()
     rclpy.shutdown()

@@ -42,7 +42,7 @@ def main(args=None):
         other_bot_name = sys.argv[1]
 
     my_node = consensus_sub(other_bot_name)
-
+    print("consensus subscription is now running...")
     rclpy.spin(my_node)
     my_node.destroy_node()
     rclpy.shutdown()
