@@ -1,52 +1,26 @@
-"""
-    Can't only publish, not subscribe.
-    but when put publish into sub callback, both work
-"""
-
 import rclpy
 from rclpy.node import Node
-from rclpy.executors import MultiThreadedExecutor
-import cv2
-from rclpy.qos import qos_profile_sensor_data, QoSProfile,  ReliabilityPolicy, HistoryPolicy, DurabilityPolicy 
+from rclpy.qos import qos_profile_sensor_data
 import numpy as np
 import sys
 import redis
 import pickle  # For serializing the image data
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 import datetime
-import time
-class consensus_node(Node):
-    def __init__(self, bot_name, other_bot_name):
-        super().__init__('consensus_node')
+
+
+class consensus_pub(Node):
+    def __init__(self, bot_name):
+        super().__init__('consensus_pub')
         # define some variable
-        self.consensus_publish_waitTime = 60. #
-        self.consensus_subwaitTime = 30.
+        self.consensus_publish_waitTime = 0.5
         self.agent_i_old = None
 
         # Redis connection
         self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
-
-        # for consensus
-        qos_profile = QoSProfile(
-                history=HistoryPolicy.KEEP_LAST, 
-                reliability=ReliabilityPolicy.RELIABLE, 
-                depth=1  ) 
-        self.subscription4 = self.create_subscription(
-            Float32MultiArray, f'/{other_bot_name}/consensus', self.consensus_callback, qos_profile)          
-        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile)
+        
+        self.publisher = self.create_publisher(Float32MultiArray, f'/{bot_name}/consensus', qos_profile_sensor_data)
         self.timer = self.create_timer(self.consensus_publish_waitTime, self.publish_data)  # calls the publish_data functionck every x seconds
-
-    
-    def consensus_callback(self, msg: Float32MultiArray):
-        data = np.array(msg.data).reshape((msg.layout.dim[0].size, msg.layout.dim[1].size))
-        theta_j = data[0, :]
-        uncertainty_j = data[1, :]
-        agent_j = {'theta_j':theta_j, 'uncertainty_j':uncertainty_j}
-        agent_j_pickled = pickle.dumps(agent_j)
-        self.redis_client.set('agent_j', agent_j_pickled)
-        time.sleep(self.consensus_subwaitTime)
-        print(f"{datetime.datetime.now()}:    consensus receive")
-
 
 
     def publish_data(self):
@@ -82,17 +56,6 @@ class consensus_node(Node):
             self.publisher.publish(msg)
             print(f"{datetime.datetime.now()}:    consensus send")
             self.agent_i_old = agent_i
-    
-    
-
-
-    def send_data_to_redis(self, key, data):
-        # Serialize the message using pickle
-        pickled_data = pickle.dumps(data)
-        # Store in Redis
-        self.redis_client.set(key, pickled_data)
-
-
 
 
 def main(args=None):
@@ -101,15 +64,12 @@ def main(args=None):
     bot_name = 'miriel'  # Default bot name
     if len(sys.argv) > 1:
         bot_name = sys.argv[1]
-        ohter_bot_name = sys.argv[2]
+    
+    my_node = consensus_pub(bot_name)
 
-    my_node = consensus_node(bot_name, ohter_bot_name)
-
-    try:
-        rclpy.spin(my_node)
-    except KeyboardInterrupt:
-        my_node.destroy_node()
-        rclpy.shutdown()
+    rclpy.spin(my_node)
+    my_node.destroy_node()
+    rclpy.shutdown()
     
 
 if __name__ == '__main__':
