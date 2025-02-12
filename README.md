@@ -26,8 +26,6 @@ LED ring:
 Best way to disconnect pi (you want to charge the bot and turn pi off): pi power cable is connected to a connector, which connects to create3. unplug that connector. there is a notch beneath it that you can pull it open
 
 
-
-
 ## Set up your PC
 Create3 bot, Pi are installed with ROS2 humble.  
 Therefore, you also need ROS2 humble for your PC.  
@@ -103,6 +101,14 @@ We use "colcon" to build our package. Install colcon by: `sudo apt install pytho
 From the directory `turtlebot_icon_ws`, build all packages by running: `colcon build --symlink-install`.  
 Then setup the environment (need to do this every time you close the terminal): `source install/setup.bash`.  
 Run the node (for example, for turtlebot `miriel`): `ros2 turtlebot_icon sub_redis_node miriel`.  
+
+
+
+
+## Check battery status 
+For example, to check oogway's battery, do: `ros2 topic echo /oogway/battery_state`.  
+Messages will take a while to show up.  
+
 
 
 ## Drive your Turtlebots
