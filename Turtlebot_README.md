@@ -7,6 +7,24 @@ Date: Feb/11/2025
 Turtlebot 4 official user manual: https://turtlebot.github.io/turtlebot4-user-manual/setup/basic.html#robot
 ROS2 Humble user manual: https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Configuring-ROS2-Environment.html
 OAK-D Lite camera documents: https://docs.luxonis.com/software/ros/depthai-ros/driver/
+Create 3 documents: https://iroboteducation.github.io/create3_docs/hw/face/
+
+
+## Power on Turtlebots
+Center Button: held for seven seconds to enter storage mode, unpower everything (it will flash white few times).
+the only way to power it on is to place it on the dock 
+
+LED ring: 
+- pulsing red: when battery < 10%
+- spinning white => Robot is booting up. Wait for "happy sound" to play.
+- half solid yellow (only LED on the bottom lit): wheel disabled
+- Green: success connecting to Wi-Fi. Give it ~10 seconds, it will go back  to white
+- solid red: error. it will automatically cycle power. it usually caused by CPU overloaded from processing too many topics. 
+- While charging, the percentage of white ring = battery %. All white = 100% battery 
+- While charging ,pulsing red: when battery < 10%
+
+Best way to disconnect pi (you want to charge the bot and turn pi off): pi power cable is connected to a connector, which connects to create3. unplug that connector. there is a notch beneath it that you can pull it open
+
 
 
 
@@ -38,7 +56,7 @@ Open your default terminal, then type in `tmux` to create a new tmux session.
 `tmux rename-session -t some_number your_name` rename the tmux session from `some_number` to `your_name`. The number can be found at the bottom left.
 `tmux detach` go back to your default terminal.
 `tmux attach -t your_name` go back to the existing session `your_name`.
-
+`tmux ls` show all existing tmux sessions.
 
 ## Discovery Server
 Since we have two Turtlebots, we need to set up the discovery servers for them at the same time.
@@ -63,7 +81,8 @@ Your setup should be:
 
 ## ros2_turtlebot_icon
 This is a little ROS2 node I wrote that subscribes to Turtlebot's RGBD images as well as VICON data.
-Then, the node uses [redis](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/), a fast in-memory data structure server, to share the images and VICON data with other python programs. 
+The node visualizes the RGBD images. 
+The node also uses [redis](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/), a fast in-memory data structure server, to share the images and VICON data with other python programs. 
 Install redis by `sudo apt install redis`.
 Check the installation by `redis-server --version`.
 start a server: `sudo systemctl start redis-server.service`.
@@ -81,7 +100,12 @@ Now back to our ROS2 node.
 We use "colcon" to build our package. Install colcon by: `sudo apt install python3-colcon-common-extensions`.
 From the directory `turtlebot_icon_ws`, build all packages by running: `colcon build --symlink-install`.
 Then setup the environment (need to do this every time you close the terminal): `source install/setup.bash`.
+Run the node (for example, for turtlebot `miriel`): `ros2 turtlebot_icon sub_redis_node miriel`.
 
+
+## Drive your Turtlebots
+For example, if you want to drive `oogway`:
+`ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap cmd_vel:=oogway/cmd_vel`.
 
 
 ## How to SSH into Turtlebots
@@ -95,3 +119,19 @@ For Turtlebot "oogway", do:
 
 It is recommended to use SSH FS VScode extension.
 With SSH FS, you don't need to manually type in the commands every time, and it makes it easy to edit configuration files!
+
+Sometimes the sensors may not run properly, you need to restart them.
+To do so: Run `turtlebot4-setup`, Navigate to `ROS Setup`, then `Robot Upstart`.
+
+
+## OAK-D Lite camera
+Once you have SSH into the pi, you may also want to change the configuration file of our OAK-D lite camera.
+It is located at `/opt/ros/humble/share/turtlebot4_bringup/config/oakd_lite.yaml`.
+It will be loaded by oakd.launch.py when starting/restarting "Upstart".
+
+You can also use `rqt` to view and change camera parameters.
+To change parameters, open "Plugins-Configuration-Dynamic Reconfigure", and drag the left side of the panel open to see list of parameters.
+
+
+## 
+
