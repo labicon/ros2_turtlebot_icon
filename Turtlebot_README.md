@@ -10,7 +10,7 @@ OAK-D Lite camera documents: https://docs.luxonis.com/software/ros/depthai-ros/d
 
 
 
-## Setup your PC
+## Set up your PC
 Create3 bot, Pi are installed with ROS2 humble.
 Therefore, you also need ROS2 humble for your PC.
 Based on my testing, ROS2 jazzy on PC won't work with ROS2 humble on pi/create3.
@@ -18,16 +18,29 @@ Based on my testing, ROS2 jazzy on PC won't work with ROS2 humble on pi/create3.
 ROS2 humble only supports Ubuntu 22 (not 24) or Linux mint 21.
 So make sure your PC has the right linux distribution installed. 
 
-My procedure to setup my PC is:
+My procedure to set up my PC is:
 *  Install [linux mint 21](https://linuxmint.com/download_all.php) following the [instruction](https://linuxmint-installation-guide.readthedocs.io/en/latest/)
 * Install ROS2 humble following [this instruction](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 * Install Turtlebot4 ROS2 package by `sudo apt update && sudo apt install ros-humble-turtlebot4-desktop`
 * Set up discovery server following [this instruction](https://turtlebot.github.io/turtlebot4-user-manual/setup/discovery_server.html). I will cover this in details later.
 * Set up your conda environment to run your codes.
 * Install [vicon-bridge](https://github.com/dasc-lab/ros2-vicon-bridge) to get VICON mocap data.
-* Install my [ros2_turtlebot_icon](https://github.com/HongruiZhao/ros2_turtlebot_icon) node to subscribe to images and VICON data and send them to your python codes using redis. I will cover this in details later.
+* Install my [ros2_turtlebot_icon](https://github.com/labicon/ros2_turtlebot_icon) node to subscribe to images and VICON data and send them to your python codes using redis. I will cover this in details later.
 
-### Discovery Server
+Since you will need lots of terminals, I highly recommend using tmux.
+Install tmux by: `apt install tmux`.
+Open your default terminal, then type in `tmux` to create a new tmux session.
+`ctrl+b+%` for vertical panel split.
+`ctrl+b+"` for horizontal panel split.
+`ctrl+b+q` to show panel number, and type in the number to go to that panel.
+`ctrl+b ctrl+up` (can hold ctrl and do multiple up): increase panel size
+`ctrl+b ctrl+down` decrease panel size
+`tmux rename-session -t some_number your_name` rename the tmux session from `some_number` to `your_name`. The number can be found at the bottom left.
+`tmux detach` go back to your default terminal.
+`tmux attach -t your_name` go back to the existing session `your_name`.
+
+
+## Discovery Server
 Since we have two Turtlebots, we need to set up the discovery servers for them at the same time.
 Your setup should be:
 `ROS_DOMAIN_ID [0]:` 
@@ -45,8 +58,29 @@ Your setup should be:
 ` ROS_DOMAIN_ID=0`
 ` ROS_DISCOVERY_SERVER="192.168.50.49:11811;192.168.50.20:11811;`
 
-### ros2_turtlebot_icon
 
+
+
+## ros2_turtlebot_icon
+This is a little ROS2 node I wrote that subscribes to Turtlebot's RGBD images as well as VICON data.
+Then, the node uses [redis](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/), a fast in-memory data structure server, to share the images and VICON data with other python programs. 
+Install redis by `sudo apt install redis`.
+Check the installation by `redis-server --version`.
+start a server: `sudo systemctl start redis-server.service`.
+stop a server: `sudo systemctl stop redis-server.service`.
+check server status: `sudo systemctl status redis-server.service`.
+enable server starts at boot: `sudo systemctl enable redis-server.service`.
+once Redis is running, you can test it by running `redis-cli`.
+and type in  `ping`  to test connection, you should get a `PONG` back.
+
+Once a redis server is running, we can use redis-py to write a python client to connect to the server.
+install: `pip install redis`.
+An example client code is provided in this repository at `./redis_example.py`.
+
+Now back to our ROS2 node.
+We use "colcon" to build our package. Install colcon by: `sudo apt install python3-colcon-common-extensions`.
+From the directory `turtlebot_icon_ws`, build all packages by running: `colcon build --symlink-install`.
+Then setup the environment (need to do this every time you close the terminal): `source install/setup.bash`.
 
 
 
