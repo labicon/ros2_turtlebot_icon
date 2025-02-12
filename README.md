@@ -40,7 +40,7 @@ My procedure to set up my PC is:
 *  Install [linux mint 21](https://linuxmint.com/download_all.php) following the [instruction](https://linuxmint-installation-guide.readthedocs.io/en/latest/)
 * Install ROS2 humble following [this instruction](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 * Install Turtlebot4 ROS2 package by `sudo apt update && sudo apt install ros-humble-turtlebot4-desktop`
-* Set up discovery server following [this instruction](https://turtlebot.github.io/turtlebot4-user-manual/setup/discovery_server.html). I will cover this in details later.
+* Set up discovery server following "User PC Setup" in [this instruction](https://turtlebot.github.io/turtlebot4-user-manual/setup/discovery_server.html). I will cover this in details later.
 * Set up your conda environment to run your codes.
 * Install [vicon-bridge](https://github.com/dasc-lab/ros2-vicon-bridge) to get VICON mocap data.
 * Install my [ros2_turtlebot_icon](https://github.com/labicon/ros2_turtlebot_icon) node to subscribe to images and VICON data and send them to your python codes using redis. I will cover this in details later.
@@ -59,8 +59,11 @@ Open your default terminal, then type in `tmux` to create a new tmux session.
 `tmux ls` show all existing tmux sessions.  
 
 ## Discovery Server
+Download and run the setup script by:  
+`wget -qO - https://raw.githubusercontent.com/turtlebot/turtlebot4_setup/humble/turtlebot4_discovery/configure_discovery.sh | bash <(cat) </dev/tty`.    
+You will be prompted for a few settings.  
 Since we have two Turtlebots, we need to set up the discovery servers for them at the same time.  
-Your setup should be:  
+Your settings should be:  
 `ROS_DOMAIN_ID [0]:`   
 `Enter the information for the first discovery server`  
 `Discovery Server ID [0]:`   
@@ -89,8 +92,7 @@ start a server: `sudo systemctl start redis-server.service`.
 stop a server: `sudo systemctl stop redis-server.service`.  
 check server status: `sudo systemctl status redis-server.service`.  
 enable server starts at boot: `sudo systemctl enable redis-server.service`.  
-once Redis is running, you can test it by running `redis-cli`.  
-and type in  `ping`  to test connection, you should get a `PONG` back.  
+once Redis is running, you can test it by running `redis-cli`. and type in  `ping`  to test connection, you should get a `PONG` back.  
 
 Once a redis server is running, we can use redis-py to write a python client to connect to the server.  
 install: `pip install redis`.  
