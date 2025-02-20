@@ -103,6 +103,9 @@ Then setup the environment (need to do this every time you close the terminal): 
 Run the node (for example, for turtlebot `miriel`): `ros2 turtlebot_icon sub_redis_node miriel`.  
 
 
+## Check you can see your Turtlebot topic 
+Run `ros2 topic list`.  
+You should be able to see topics published under the name of `oogway` or `miriel` you have turned the Turtlebots on. 
 
 
 ## Check battery status 
