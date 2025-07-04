@@ -100,7 +100,7 @@ Now back to our ROS2 node.
 We use "colcon" to build our package. Install colcon by: `sudo apt install python3-colcon-common-extensions`.  
 From the directory `turtlebot_icon_ws`, build all packages by running: `colcon build --symlink-install`.  
 Then setup the environment (need to do this every time you close the terminal): `source install/setup.bash`.  
-Run the node (for example, for turtlebot `miriel`): `ros2 turtlebot_icon sub_redis_node miriel`.  
+Run the node (for example, for turtlebot `miriel`): `ros2 run turtlebot_icon sub_redis_node miriel`.  
 
 
 ## Check you can see your Turtlebot topic 
