@@ -1,6 +1,6 @@
 # How to Turtlebot4
 Author: Hongrui Zhao (hongrui5@illinois.edu)
-Date: Feb/11/2025
+Date: Aug/15/2025
 
 
 ## Useful Resources
@@ -140,7 +140,7 @@ The workflow should be:
 ### Step1: set up motion capture
 * Put the turtlebots to the motion capture room.
 * Enable tracking for oogway and miriel in the VICON app. 
-* Run `vicon-bridge`:
+* Run `vicon-bridge`, remember in `launch/all_segments.launch.py`, set `vicon_computer_ip = "192.168.50.118"`:
 ```bash
 source install/local_setup.bash
 ros2 launch vicon_bridge all_segments.launch.py
