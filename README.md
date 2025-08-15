@@ -108,17 +108,6 @@ Run `ros2 topic list`.
 You should be able to see topics published under the name of `oogway` or `miriel` you have turned the Turtlebots on. 
 
 
-## Check battery status 
-For example, to check oogway's battery, do: `ros2 topic echo /oogway/battery_state`.  
-Messages will take a while to show up.  
-
-
-
-## Drive your Turtlebots
-For example, if you want to drive `oogway`:  
-`ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap cmd_vel:=oogway/cmd_vel`.  
-
-
 ## How to SSH into Turtlebots
 Both our Turtlebots are connected to "iconlab-5G" wifi using "discovery server" mode.  
 First connect your PC to the same wifi.  
@@ -142,6 +131,49 @@ It will be loaded by oakd.launch.py when starting/restarting "Upstart".
 
 You can also use `rqt` to view and change camera parameters.  
 To change parameters, open "Plugins-Configuration-Dynamic Reconfigure", and drag the left side of the panel open to see list of parameters.  
+
+
+## Run RAMEN hardware experiments
+need to download [RAMEN repo](https://github.com/labicon/RAMEN.git).
+
+The workflow should be:
+### Step1: set up motion capture
+* Put the turtlebots to the motion capture room.
+* Enable tracking for oogway and miriel in the VICON app. 
+* Run `vicon-bridge`:
+```bash
+source install/local_setup.bash
+ros2 launch vicon_bridge all_segments.launch.py
+```
+### Step2: run turtlebot nodes 
+* Run my subscribe and consensus nodes, and you should see the images from the turtle:
+```bash
+source install/local_setup.bash
+ros2 run turtlebot_icon sub_redis_node miriel
+```
+### Step3: drive the turtle
+* Now since you can see the images from the turtle, you can drive the turtle by:
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap cmd_vel:=oogway/cmd_vel
+```
+### Step4: monitor the battery status 
+* Turtlebot drains its battery very fast, so you may want to monitor the battery status:
+```bash
+ros2 topic echo /oogway/battery_state
+```
+### Step5: run mapping
+* go to RAMEN repo, activate the conda environment, and do:
+```bash
+python turtlebot_mapping.py --config ./configs/turtlebot/single_miriel.yaml
+```
+* This will start the mapping process using the incoming images.
+
+### Step6: Run visualization:
+* to visualize the reconstrution results, do:
+```bash
+python turtlebot_vis.py --config ./configs/turtlebot/single_miriel.yaml
+```
+
 
 
 
