@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'sub_redis_node = turtlebot_icon.sub_redis_node:main',
+            'realsense_node = turtlebot_icon.realsense_node:main',
+            'realsense_rgbd_node = turtlebot_icon.realsense_rgbd_node:main',
             'consensus_node = turtlebot_icon.consensus_node:main',
             'consensus_sub = turtlebot_icon.consensus_sub:main',
             'consensus_pub = turtlebot_icon.consensus_pub:main',
