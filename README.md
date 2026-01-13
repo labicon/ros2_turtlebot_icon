@@ -113,9 +113,9 @@ Both our Turtlebots are connected to "iconlab-5G" wifi using "discovery server" 
 First connect your PC to the same wifi.  
 
 For Turtlebot "miriel", do:   
-`ssh ubuntu@192.168.50.49`  
+`ssh ubuntu@192.168.60.210`  
 For Turtlebot "oogway", do:  
-`ssh ubuntu@192.168.50.20`  
+`ssh ubuntu@192.168.60.179`  
 
 It is recommended to use SSH FS VScode extension.  
 With SSH FS, you don't need to manually type in the commands every time, and it makes it easy to edit configuration files!  
